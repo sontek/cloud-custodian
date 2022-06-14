@@ -108,6 +108,8 @@ be applies for all resources.
 
    group-firehose.rst
 
+   group-fis.rst
+
    group-fsx.rst
 
    group-gamelift.rst
