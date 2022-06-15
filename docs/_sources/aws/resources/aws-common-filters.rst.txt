@@ -2008,7 +2008,41 @@ Specialized metrics filter for shield
 subnet
 ++++++
 
-Filter a resource by its associated subnets.
+Filter a resource by its associated subnets attributes.
+
+This filter is generally available for network attached resources.
+
+ie. to find lambda functions that are vpc attached to subnets with
+a tag key Location and value Database.
+
+:example:
+
+.. code-block:: yaml
+
+  policies:
+    - name: lambda
+      resource: aws.lambda
+      filters:
+        - type: subnet
+          key: tag:Location
+          value: Database
+
+It also supports finding resources on public or private subnets
+via route table introspection to determine if the subnet is
+associated to an internet gateway.
+
+:example:
+
+.. code-block:: yaml
+
+  policies:
+     - name: public-ec2
+       resource: aws.ec2
+       filters:
+         - type: subnet
+           igw: True
+           key: SubnetId
+           value: present
 
 .. container:: toggle
 
@@ -2023,6 +2057,10 @@ Filter a resource by its associated subnets.
     properties:
       default:
         type: object
+      igw:
+        enum:
+        - true
+        - false
       key:
         type: string
       match-resource:

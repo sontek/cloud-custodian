@@ -7027,11 +7027,48 @@ but no more than 15.</p>
 </section>
 <section id="subnet">
 <span id="aws-common-filters-subnet"></span><h2>subnet<a class="headerlink" href="#subnet" title="Permalink to this headline">¶</a></h2>
-<p>Filter a resource by its associated subnets.</p>
+<p>Filter a resource by its associated subnets attributes.</p>
+<p>This filter is generally available for network attached resources.</p>
+<p>ie. to find lambda functions that are vpc attached to subnets with
+a tag key Location and value Database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">example</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">policies</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lambda</span><span class="w"></span>
+<span class="w">    </span><span class="nt">resource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws.lambda</span><span class="w"></span>
+<span class="w">    </span><span class="nt">filters</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">subnet</span><span class="w"></span>
+<span class="w">        </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tag:Location</span><span class="w"></span>
+<span class="w">        </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Database</span><span class="w"></span>
+</pre></div>
+</div>
+<p>It also supports finding resources on public or private subnets
+via route table introspection to determine if the subnet is
+associated to an internet gateway.</p>
+<dl class="field-list simple">
+<dt class="field-odd">example</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">policies</span><span class="p">:</span><span class="w"></span>
+<span class="w">   </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">public-ec2</span><span class="w"></span>
+<span class="w">     </span><span class="nt">resource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws.ec2</span><span class="w"></span>
+<span class="w">     </span><span class="nt">filters</span><span class="p">:</span><span class="w"></span>
+<span class="w">       </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">subnet</span><span class="w"></span>
+<span class="w">         </span><span class="nt">igw</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w"></span>
+<span class="w">         </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SubnetId</span><span class="w"></span>
+<span class="w">         </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span><span class="w"></span>
+</pre></div>
+</div>
 <div class="toggle docutils container">
 <div class="header docutils container" style=""></div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">properties</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span><span class="w"></span>
+<span class="w">  </span><span class="nt">igw</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">enum</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
 <span class="w">  </span><span class="nt">key</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span><span class="w"></span>
 <span class="w">  </span><span class="nt">match-resource</span><span class="p">:</span><span class="w"></span>
