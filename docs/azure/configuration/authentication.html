@@ -5397,13 +5397,13 @@ az ad sp create-for-rbac --name &lt;name&gt; --password &lt;password&gt;
 </pre></div>
 </div>
 <p>This will yield something like:</p>
-<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="s2">&quot;appId&quot;</span><span class="o">:</span> <span class="nx">appid</span><span class="p">,</span>
-  <span class="s2">&quot;displayName&quot;</span><span class="o">:</span> <span class="nx">name</span><span class="p">,</span>
-  <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">name</span><span class="p">,</span>
-  <span class="s2">&quot;password&quot;</span><span class="o">:</span> <span class="nx">password</span><span class="p">,</span>
-  <span class="s2">&quot;tenant&quot;</span><span class="o">:</span> <span class="nx">guid</span>
-<span class="p">}</span>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="s2">&quot;appId&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">appid</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="s2">&quot;displayName&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="s2">&quot;password&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">password</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="s2">&quot;tenant&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">guid</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Map the Service Principal to environment variables for Custodian:</p>
