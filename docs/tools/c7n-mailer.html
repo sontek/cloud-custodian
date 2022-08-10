@@ -5579,7 +5579,9 @@ like so: <code class="docutils literal notranslate"><span class="pre">slack_msg_
 </tbody>
 </table>
 <p>Slack delivery can also be set via a resource’s tag name. For example, using “slack://tag/slack_channel” will look for a tag name of ‘slack_channel’, and if matched on a resource will deliver the message to the value of that resource’s tag:</p>
-<p><code class="docutils literal notranslate"><span class="pre">slack_channel:https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">slack_channel:https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX</span></code>
+<code class="docutils literal notranslate"><span class="pre">slack_channel:custodian-test</span></code>
+<code class="docutils literal notranslate"><span class="pre">owner:foo&#64;bar</span></code></p>
 <p>Delivery via tag has been tested with webhooks but should support all delivery methods.</p>
 </section>
 <section id="splunk-http-event-collector-hec">
