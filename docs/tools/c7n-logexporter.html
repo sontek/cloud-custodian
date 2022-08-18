@@ -5448,6 +5448,8 @@ source account access to the Cloudwatch Destination</p>
 
 <span class="n">accounts</span><span class="p">:</span>
   <span class="o">-</span> <span class="n">name</span><span class="p">:</span> <span class="n">custodian</span><span class="o">-</span><span class="n">demo</span>
+    <span class="c1"># https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CreateSubscriptionFilter-IAMrole.html</span>
+    <span class="n">subscription</span><span class="o">-</span><span class="n">role</span><span class="p">:</span> <span class="s2">&quot;arn:aws:iam::111111111111:role/&lt;role-name&gt;&quot;</span>
     <span class="n">role</span><span class="p">:</span> <span class="s2">&quot;arn:aws:iam::111111111111:role/CloudCustodianRole&quot;</span>
     <span class="n">groups</span><span class="p">:</span>
       <span class="o">-</span> <span class="s2">&quot;/aws/lambda/*&quot;</span>
