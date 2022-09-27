@@ -2,13 +2,27 @@ SELF_MAKE := $(lastword $(MAKEFILE_LIST))
 PKG_REPO = testpypi
 PKG_SET = tools/c7n_gcp tools/c7n_kube tools/c7n_openstack tools/c7n_mailer tools/c7n_logexporter tools/c7n_policystream tools/c7n_trailcreator tools/c7n_org tools/c7n_sphinxext tools/c7n_terraform tools/c7n_awscc tools/c7n_tencentcloud tools/c7n_azure
 
+UNAME_M := $(shell uname -m)
+DOCS_VIRTUAL_ENV := $(PWD)/docs-venv
+POETRY_CMD := poetry
+ifeq ($(UNAME_M), arm64)
+	# https://github.com/grpc/grpc/issues/25082
+	POETRY_CMD := GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1 $(POETRY_CMD)
+	POETRY_CMD := GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1 $(POETRY_CMD)
+endif
+
 install:
 	python3 -m venv .
 	. bin/activate && pip install -r requirements-dev.txt
 
 install-poetry:
-	poetry install
-	for pkg in $(PKG_SET); do echo "Install $$pkg" && cd $$pkg && poetry install && cd ../..; done
+	$(POETRY_CMD) install
+	for pkg in $(PKG_SET); \
+		do echo "Install $$pkg" && \
+		cd $$pkg && \
+		$(POETRY_CMD) install && \
+		cd ../..; \
+		done
 
 pkg-rebase:
 	rm -f poetry.lock
@@ -80,10 +94,10 @@ pkg-publish-wheel:
 	for pkg in $(PKG_SET); do cd $$pkg && twine upload -r $(PKG_REPO) dist/* && cd ../..; done
 
 test-poetry:
-	. $(PWD)/test.env && poetry run pytest -n auto tests tools
+	. $(PWD)/test.env && $(POETRY_CMD) run pytest -n auto tests tools
 
 test-poetry-cov:
-	. $(PWD)/test.env && poetry run pytest -n auto \
+	. $(PWD)/test.env && $(POETRY_CMD) run pytest -n auto \
             --cov c7n --cov tools/c7n_azure/c7n_azure \
             --cov tools/c7n_gcp/c7n_gcp --cov tools/c7n_kube/c7n_kube \
             --cov tools/c7n_mailer/c7n_mailer \
@@ -99,7 +113,9 @@ ttest:
 	C7N_FUNCTIONAL=yes AWS_DEFAULT_REGION=us-east-2 pytest tests -m terraform
 
 sphinx:
-# if this errors either tox -e docs or cd tools/c7n_sphinext && poetry install
+	python -m venv $(DOCS_VIRTUAL_ENV)
+	$(eval POETRY_CMD := VIRTUAL_ENV=$(DOCS_VIRTUAL_ENV) $(POETRY_CMD))
+	$(MAKE) POETRY_CMD="$(POETRY_CMD)" install-poetry
 	make -f docs/Makefile.sphinx html
 
 ghpages:

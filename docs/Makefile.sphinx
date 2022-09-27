@@ -1,17 +1,17 @@
 # Makefile for Sphinx documentation
 #
 
-ifndef VIRTUALENV
-VIRTUALENV = docs
+ifndef DOCS_VIRTUAL_ENV
+DOCS_VIRTUAL_ENV = $(PWD)/docs-venv
 endif
 
 # You can set these variables from the command line.
-SPHINXBINS    ?= .tox/$(VIRTUALENV)/bin
+SPHINXBINS    ?= $(DOCS_VIRTUAL_ENV)/bin
 SRCDIR        ?= docs/source
 SPHINXOPTS    ?=
 #SPHINXBUILD   ?= $(SPHINXBINS)/sphinx-build
 # use for poetry environments
-SPHINXBUILD   ?= sphinx-build
+SPHINXBUILD   ?= $(SPHINXBINS)/sphinx-build
 PAPER         ?=
 BUILDDIR      ?= $(SRCDIR)/../build
 
@@ -85,13 +85,13 @@ html:
 	cp -p tools/c7n_logexporter/README.md $(SRCDIR)/tools/c7n-logexporter.md
 
 	mkdir -p $(SRCDIR)/aws/resources
-	c7n-sphinxext --provider aws --output-dir $(SRCDIR)/aws/resources --group-by=resource_type.service
+	$(SPHINXBINS)/c7n-sphinxext --provider aws --output-dir $(SRCDIR)/aws/resources --group-by=resource_type.service
 	mkdir -p $(SRCDIR)/awscc/resources
-	c7n-sphinxext --provider awscc --output-dir $(SRCDIR)/awscc/resources --group-by=resource_type.service
+	$(SPHINXBINS)/c7n-sphinxext --provider awscc --output-dir $(SRCDIR)/awscc/resources --group-by=resource_type.service
 	mkdir -p $(SRCDIR)/gcp/resources
-	c7n-sphinxext --provider gcp --output-dir $(SRCDIR)/gcp/resources --group-by=resource_type.service
+	$(SPHINXBINS)/c7n-sphinxext --provider gcp --output-dir $(SRCDIR)/gcp/resources --group-by=resource_type.service
 	mkdir -p $(SRCDIR)/azure/resources
-	c7n-sphinxext --provider azure --output-dir $(SRCDIR)/azure/resources --group-by=resource_type.doc_groups
+	$(SPHINXBINS)/c7n-sphinxext --provider azure --output-dir $(SRCDIR)/azure/resources --group-by=resource_type.doc_groups
 
 	$(SPHINXBUILD) -j auto -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 

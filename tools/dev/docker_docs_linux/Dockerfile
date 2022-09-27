@@ -18,7 +18,7 @@
 
 
 
-FROM python:3.8-buster
+FROM python:3.9-buster
 
 LABEL name="custodian tox" \
       description="Run Custodian test suite" \
@@ -26,14 +26,12 @@ LABEL name="custodian tox" \
       homepage="http://github.com/cloud-custodian/cloud-custodian" \
       maintainer="Custodian Community <https://cloudcustodian.io>"
 
-RUN pip3 install tox
+RUN pip3 install poetry==1.2.1
 
 ADD . /src
 WORKDIR /src
-RUN tox -e py38 --notest
-
-ARG TOX_ENV=py38
+RUN make sphinx
 
 # Setup for EntryPoint
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8" TOX_ENV_ENV=$TOX_ENV
-ENTRYPOINT tox -e $TOX_ENV_ENV
+ENTRYPOINT make -f docs/Makefile.sphinx html
