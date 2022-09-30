@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import re
 import math
+import time
 
 from concurrent.futures import as_completed
 from datetime import timedelta, datetime
@@ -20,7 +21,7 @@ from c7n.filters.related import RelatedResourceFilter
 from c7n.manager import resources
 from c7n.query import QueryResourceManager, TypeInfo
 from c7n.utils import local_session, type_schema, get_retry
-
+from ratelimiter import RateLimiter
 
 @resources.register('service-quota-request')
 class ServiceQuotaRequest(QueryResourceManager):
@@ -49,12 +50,22 @@ class ServiceQuota(QueryResourceManager):
         name = 'QuotaName'
         metrics_namespace = 'AWS/Usage'
 
+    def limited(self, until):
+        duration = int(round(until - time.time()))
+        print('Rate limited, sleeping for {:d} seconds'.format(duration))
+
+
     def augment(self, resources):
         client = local_session(self.session_factory).client('service-quotas')
         retry = get_retry(('TooManyRequestsException',))
+        _ten_sec_rate_limiter = RateLimiter(
+            max_calls=10,
+            period=1,
+            callback=self.limited,
+        )
 
         def get_quotas(client, s):
-            def _get_quotas(client, s, attr):
+            def _get_quotas(client, s, rate_limiter, attr):
                 quotas = {}
                 token = None
                 kwargs = {
@@ -65,10 +76,17 @@ class ServiceQuota(QueryResourceManager):
                 while True:
                     if token:
                         kwargs['NextToken'] = token
-                    response = retry(
-                        getattr(client, attr),
-                        **kwargs
-                    )
+                    if rate_limiter:
+                        with rate_limiter:
+                            response = retry(
+                                getattr(client, attr),
+                                **kwargs
+                            )
+                    else:
+                        response = retry(
+                            getattr(client, attr),
+                            **kwargs
+                        )
                     rquotas = {q['QuotaCode']: q for q in response['Quotas']}
                     token = response.get('NextToken')
                     new = set(rquotas) - set(quotas)
@@ -80,14 +98,19 @@ class ServiceQuota(QueryResourceManager):
                         break
                 return quotas.values()
 
-            dquotas = {
-                q['QuotaCode']: q
-                for q in _get_quotas(client, s, 'list_aws_default_service_quotas')
-            }
-            quotas = {
-                q['QuotaCode']: q
-                for q in _get_quotas(client, s, 'list_service_quotas')
-            }
+            dquotas = {}
+            for q in _get_quotas(
+                client, s, None,
+                'list_aws_default_service_quotas'
+            ):
+                dquotas[q['QuotaCode']] = q
+
+            quotas = {}
+            for q in _get_quotas(
+                client, s, _ten_sec_rate_limiter, 'list_service_quotas'
+            ):
+                quotas[q['QuotaCode']] = q
+
             dquotas.update(quotas)
             return dquotas.values()
 

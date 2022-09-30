@@ -23,6 +23,7 @@ from c7n.tags import register_ec2_tags, register_universal_tags
 from c7n.utils import (
     local_session, generate_arn, get_retry, chunks, camelResource)
 
+from ratelimiter import RateLimiter
 
 try:
     from botocore.paginate import PageIterator, Paginator

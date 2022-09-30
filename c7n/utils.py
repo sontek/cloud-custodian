@@ -456,6 +456,7 @@ def get_retry(retry_codes=(), max_attempts=8, min_delay=1, log_retries=False):
                         log_retries,
                         "retrying %s on error:%s attempt:%d last delay:%0.2f",
                         func, e.response['Error']['Code'], idx, delay)
+            print(f"Hit error, running {delay=}")
             time.sleep(delay)
     return _retry
 
