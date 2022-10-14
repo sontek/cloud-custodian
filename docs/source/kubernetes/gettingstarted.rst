@@ -221,3 +221,23 @@ attributes that way:
         }
     }
 
+One final way you can identify what attributes will be available in your filters
+is by creating an empty policy and running that and then viewing the output. So
+for example if you wanted to find what attributes are available for a pod you
+could write a policy:
+
+.. code-block:: yaml
+
+    policies:
+      - name: all-pods
+        resource: k8s.pod
+
+Name it `all-pods.yml` and run it against your cluster:
+
+.. code-block:: bash
+
+   ❯ custodian run all-pods.yml -s output
+    2022-10-14 17:18:29,575: custodian.policy:INFO policy:all-pods resource:k8s.pod region: count:14 time:0.05
+
+Then you can view the resources pulled back in `output/all-pods/resources.json`
+to grab any attributes off them to filter on.
