@@ -52,6 +52,7 @@ def test_provider_parse():
         "filename": "network.tf",
         "line_start": 5,
         "line_end": 8,
+        "path": "aws_subnet.example",
         "src_dir": Path("tests") / "terraform" / "ec2_stop_protection_disabled",
     }
 
