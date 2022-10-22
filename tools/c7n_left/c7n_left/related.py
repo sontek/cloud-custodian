@@ -22,7 +22,7 @@ def RelatedResourceFilter(related_resource, related_ids_expression):
                     break
 
             if not target_resources:
-                return []
+                return {}
 
             # Now we need to find any of the target resource that have a link
             # back to our base resource.   This will be a list of base resource IDs
@@ -57,6 +57,12 @@ def RelatedResourceFilter(related_resource, related_ids_expression):
 
         def process(self, resources, event):
             related = self.get_related(resources, event)
-            return [r for r in resources if self.process_resource(r, related[r['id']])]
+            found = []
+            for r in resources:
+                result = related.get(r['id'])
+                if result:
+                    if self.process_resource(r, related[r['id']]):
+                        found.append(r)
+            return found
 
     return _RelatedResourceFilter
