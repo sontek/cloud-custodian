@@ -15,6 +15,7 @@ from ...core import (
     IACSourceMode,
     log,
 )
+from ...related import RelatedResourceFilter
 from .graph import TerraformGraph
 
 
@@ -23,7 +24,6 @@ class TerraformResourceManager(IACResourceManager):
 
 
 class TerraformResourceMap(IACResourceMap):
-
     resource_class = TerraformResourceManager
 
 
@@ -43,6 +43,18 @@ class TerraformProvider(IACSourceProvider):
     def parse(self, source_dir):
         graph = TerraformGraph(load_from_path(source_dir), source_dir)
         log.debug("Loaded %d resources", len(graph))
+        # TODO:  We should figure out how we want to generate the references
+        # dynamically.  This proves we *can* do it from the graph but we need
+        # to decide exactly what it'll look like.
+        TerraformResourceManager.filter_registry.register(
+            "server_side_encryption_configuration",
+            RelatedResourceFilter(
+                # RelatedResource
+                "aws_s3_bucket_server_side_encryption_configuration",
+                # RelatedIdsExpression
+                "bucket",
+            ),
+        )
         return graph
 
     def match_dir(self, source_dir):

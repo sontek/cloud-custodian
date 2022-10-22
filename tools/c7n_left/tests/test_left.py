@@ -142,8 +142,10 @@ def test_cli_output_github(tmp_path):
     )
     assert result.exit_code == 0
     assert result.output == (
-        "::error file=tests/terraform/aws_s3_encryption_audit/main.tf line=25 lineEnd=28"
-        " title=terraform.aws_s3_bucket - policy:check-bucket::\n"
+        '::error file=tests/terraform/aws_s3_encryption_audit/main.tf line=25 '
+        'lineEnd=28 title=terraform.aws_s3_bucket - policy:check-bucket::\n'
+        '::error file=tests/terraform/aws_s3_encryption_audit/main.tf line=30 '
+        'lineEnd=33 title=terraform.aws_s3_bucket - policy:check-bucket::\n'
     )
 
 
@@ -186,5 +188,89 @@ def test_cli_output_json(tmp_path):
                 "name": "check-bucket",
                 "resource": "terraform.aws_s3_bucket",
             },
+        },
+        {'code_block': [[30,
+                         'resource "aws_s3_bucket" "example_d" {'],
+                        [31,
+                         '  bucket = "c7n-aws-s3-encryption-audit-test-d"'],
+                        [32,
+                         '  acl    = "private"'],
+                        [33,
+                         '}']],
+         'file_line_end': 33,
+         'file_line_start': 30,
+         'file_path': 'tests/terraform/aws_s3_encryption_audit/main.tf',
+         'policy': {'filters': [{'server_side_encryption_configuration': 'absent'}],
+                    'mode': {'type': 'terraform-source'},
+                    'name': 'check-bucket',
+                    'resource': 'terraform.aws_s3_bucket'}},
+    ]
+
+
+def test_related_filter(tmp_path):
+    (tmp_path / "policy.json").write_text(
+        json.dumps(
+            {
+                "policies": [
+                    {
+                        "name": "check-related-bucket",
+                        "resource": "terraform.aws_s3_bucket",
+                        "filters": [
+                            {
+                                "type": "server_side_encryption_configuration",
+                                "key": "rule.apply_server_side_encryption_by_default.sse_algorithm",
+                                "value": "AES256",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run",
+            "-p",
+            str(tmp_path),
+            "-d",
+            str(terraform_dir / "aws_s3_encryption_audit"),
+            "-o",
+            "json",
+            "--output-file",
+            str(tmp_path / "output.json"),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+
+    results = json.loads((tmp_path / "output.json").read_text())
+    assert "results" in results
+    assert results["results"] == [
+        {
+            'code_block': [
+                [30, 'resource "aws_s3_bucket" "example_d" {'],
+                [31,
+                '  bucket = '
+                '"c7n-aws-s3-encryption-audit-test-d"'],
+                [32, '  acl    = "private"'],
+                [33, '}']
+            ],
+            'file_line_end': 33,
+            'file_line_start': 30,
+            'file_path': 'tests/terraform/aws_s3_encryption_audit/main.tf',
+            'policy': {
+                'filters': [
+                    {
+                        'key': 'rule.apply_server_side_encryption_by_default.sse_algorithm',
+                        'type': 'server_side_encryption_configuration',
+                        'value': 'AES256'
+                    }
+                ],
+                'mode': {'type': 'terraform-source'},
+                'name': 'check-related-bucket',
+                'resource': 'terraform.aws_s3_bucket'}
         }
     ]

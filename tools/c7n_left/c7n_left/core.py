@@ -11,6 +11,7 @@ from c7n.manager import ResourceManager
 
 from c7n.provider import Provider, clouds
 from c7n.policy import PolicyExecutionMode
+from .utils import load_policies
 
 
 log = logging.getLogger("c7n.iac")
@@ -31,8 +32,8 @@ class IACSourceProvider(Provider):
 
 
 class CollectionRunner:
-    def __init__(self, policies, options, reporter):
-        self.policies = policies
+    def __init__(self, policy_dir, options, reporter):
+        self.policy_dir = policy_dir
         self.options = options
         self.reporter = reporter
 
@@ -46,16 +47,16 @@ class CollectionRunner:
             )
 
         graph = provider.parse(self.options.source_dir)
-
-        for p in self.policies:
+        policies = load_policies(self.policy_dir, self.options)
+        for p in policies:
             p.expand_variables(p.get_variables())
             p.validate()
 
-        self.reporter.on_execution_started(self.policies)
+        self.reporter.on_execution_started(policies)
         # consider inverting this order to allow for results grouped by policy
         # at the moment, we're doing results grouped by resource.
         for rtype, resources in graph.get_resources_by_type():
-            for p in self.policies:
+            for p in policies:
                 if not self.match_type(rtype, p):
                     continue
                 result_set = self.run_policy(p, graph, resources, event)
@@ -69,7 +70,7 @@ class CollectionRunner:
         return policy.push(event)
 
     def get_provider(self):
-        provider_name = {p.provider_name for p in self.policies}.pop()
+        provider_name = self.options.provider
         provider = clouds[provider_name]()
         return provider
 
