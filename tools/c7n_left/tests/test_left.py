@@ -207,7 +207,7 @@ def test_cli_output_json(tmp_path):
     ]
 
 
-def test_related_filter(tmp_path):
+def test_related_filter_s3_encryption(tmp_path):
     (tmp_path / "policy.json").write_text(
         json.dumps(
             {
@@ -274,3 +274,51 @@ def test_related_filter(tmp_path):
                 'resource': 'terraform.aws_s3_bucket'}
         }
     ]
+
+
+def test_related_filter_s3_encryption_absent(tmp_path):
+    (tmp_path / "policy.json").write_text(
+        json.dumps(
+            {
+                "policies": [
+                    {
+                        "name": "check-related-bucket",
+                        "resource": "terraform.aws_s3_bucket",
+                        "filters": [
+                            {
+                                "type": "server_side_encryption_configuration",
+                                "key": "rule.apply_server_side_encryption_by_default",
+                                "value": "absent",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run",
+            "-p",
+            str(tmp_path),
+            "-d",
+            str(terraform_dir / "aws_s3_encryption_audit"),
+            "-o",
+            "json",
+            "--output-file",
+            str(tmp_path / "output.json"),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+
+    results = json.loads((tmp_path / "output.json").read_text())
+    assert "results" in results
+    string_results = str(results["results"])
+    assert "example_a" in string_results
+    assert "example_b" in string_results
+    assert "example_c" in string_results
+    assert "example_d" not in string_results

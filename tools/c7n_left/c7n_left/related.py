@@ -51,6 +51,11 @@ def RelatedResourceFilter(related_resource, related_ids_expression):
                     "%s" % self.data["key"],
                     r
                 )
+                # We didn't match the key they were looking for and
+                # theya re using the special "absent" value.
+                if value is None and self.data["value"] == "absent":
+                    return True
+
                 if value == self.data["value"]:
                     return True
             return False
@@ -59,10 +64,12 @@ def RelatedResourceFilter(related_resource, related_ids_expression):
             related = self.get_related(resources, event)
             found = []
             for r in resources:
-                result = related.get(r['id'])
-                if result:
-                    if self.process_resource(r, related[r['id']]):
-                        found.append(r)
+                # Pass a list of `None` in here so there is still an
+                # object to match on.  So in the case where they say
+                # "key is absent" we can check if that is true.
+                result = related.get(r['id']) or [None]
+                if self.process_resource(r, result):
+                    found.append(r)
             return found
 
     return _RelatedResourceFilter
