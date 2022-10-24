@@ -3,10 +3,9 @@ from collections import defaultdict
 import jmespath
 
 
-def RelatedResourceFilter(related_resource, related_ids_expression):
+def RelatedResourceFilter(reference_index):
     class _RelatedResourceFilter(ValueFilter):
-        RelatedResource = related_resource
-        RelatedIdsExpression = related_ids_expression
+        references = reference_index
 
         def get_related(self, resources, event):
             # Resources is the base resource.  So for example if you are on
@@ -14,28 +13,34 @@ def RelatedResourceFilter(related_resource, related_ids_expression):
             # server_side_encryption_configuration, `resources` is the list
             # of s3 buckets.
             target_resources = None
+
             for rtype, potential_targets in event['graph'].get_resources_by_type():
                 # We have some resources on our graph that are of the target type.
                 # Exit early because these are the only resources we need to look at.
-                if rtype == self.RelatedResource:
+                if rtype == self.data['type']:
                     target_resources = potential_targets
                     break
 
             if not target_resources:
                 return {}
 
+            target_resources_by_id = {
+                r['id']: r for r in target_resources
+            }
+
+            related_resources = defaultdict(list)
             # Now we need to find any of the target resource that have a link
             # back to our base resource.   This will be a list of base resource IDs
             # that were found in our target.
-            related_resources = defaultdict(list)
-            base_resource_ids = set([r['id'] for r in resources])
+            for base_resource in resources:
+                # This resource has no references.  Early exit.
+                base_id = base_resource['id']
+                if base_id not in self.references.resource_index:
+                    continue
 
-            for target in target_resources:
-                base_id = jmespath.search(
-                    "%s" % self.RelatedIdsExpression,
-                    target
-                )
-                if base_id in base_resource_ids:
+                target_ids = self.references.resource_index[base_id][self.data['type']]
+                for target_id in target_ids:
+                    target = target_resources_by_id[target_id]
                     related_resources[base_id].append(target)
 
             return related_resources

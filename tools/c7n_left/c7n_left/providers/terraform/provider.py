@@ -13,6 +13,7 @@ from ...core import (
     IACResourceMap,
     IACSourceProvider,
     IACSourceMode,
+    ResourceGraphReferenceIndex,
     log,
 )
 from ...related import RelatedResourceFilter
@@ -41,20 +42,21 @@ class TerraformProvider(IACSourceProvider):
         return policies
 
     def parse(self, source_dir):
-        graph = TerraformGraph(load_from_path(source_dir), source_dir)
+        resource_data = load_from_path(source_dir)
+        graph = TerraformGraph(resource_data, source_dir)
+        references = ResourceGraphReferenceIndex()
+        # We need to traverse the graph one time to get all the references
+        # so we can generate the filter registry.
+        [_ for _ in graph.get_resources_by_type(references_index=references)]
         log.debug("Loaded %d resources", len(graph))
-        # TODO:  We should figure out how we want to generate the references
-        # dynamically.  This proves we *can* do it from the graph but we need
-        # to decide exactly what it'll look like.
-        TerraformResourceManager.filter_registry.register(
-            "server_side_encryption_configuration",
-            RelatedResourceFilter(
-                # RelatedResource
-                "aws_s3_bucket_server_side_encryption_configuration",
-                # RelatedIdsExpression
-                "bucket",
-            ),
-        )
+        related_filter = RelatedResourceFilter(references)
+
+        for resource_type in references.registry.keys():
+            TerraformResourceManager.filter_registry.register(
+                resource_type,
+                related_filter,
+            )
+
         return graph
 
     def match_dir(self, source_dir):
