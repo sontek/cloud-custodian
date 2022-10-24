@@ -56,9 +56,13 @@ def RelatedResourceFilter(reference_index):
                     "%s" % self.data["key"],
                     r
                 )
+
                 # We didn't match the key they were looking for and
-                # theya re using the special "absent" value.
+                # they are using the special "absent" value.
                 if value is None and self.data["value"] == "absent":
+                    return True
+
+                if value is not None and self.data["value"] == "present":
                     return True
 
                 if value == self.data["value"]:
