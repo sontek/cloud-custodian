@@ -50,6 +50,7 @@ def test_provider_parse():
     assert rtype == "aws_subnet"
     assert resources[0]["__tfmeta"] == {
         "filename": "network.tf",
+        "label": "aws_subnet",
         "line_start": 5,
         "line_end": 8,
         "path": "aws_subnet.example",
