@@ -251,3 +251,134 @@ def test_cli_output_json(tmp_path):
             },
         }
     ]
+
+
+def test_related_filter_s3_encryption(tmp_path):
+    (tmp_path / "policy.json").write_text(
+        json.dumps(
+            {
+                "policies": [
+                    {
+                        "name": "check-related-bucket",
+                        "resource": "terraform.aws_s3_bucket",
+                        "filters": [
+                            {
+                                "type": "related_resource",
+                                "resource_type": "aws_s3_bucket_server_side_encryption_configuration",  # noqa: E501
+                                "key": "rule.apply_server_side_encryption_by_default.sse_algorithm",
+                                "value": "AES256",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run",
+            "-p",
+            str(tmp_path),
+            "-d",
+            str(terraform_dir / "aws_s3_encryption_audit"),
+            "-o",
+            "json",
+            "--output-file",
+            str(tmp_path / "output.json"),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 1
+
+    results = json.loads((tmp_path / "output.json").read_text())
+    assert "results" in results
+    results["results"][0]["resource"].pop("id")
+    assert results["results"] == [
+        {
+            'code_block': [[30, 'resource "aws_s3_bucket" "example_d" {'],
+                 [31, '  bucket = "c7n-aws-s3-encryption-audit-test-d"'],
+                 [32, '  acl    = "private"'],
+                 [33, '}']],
+            'file_line_end': 33,
+            'file_line_start': 30,
+            'file_path': 'tests/terraform/aws_s3_encryption_audit/main.tf',
+            'policy': {
+                'filters': [
+                    {
+                        'key': 'rule.apply_server_side_encryption_by_default.sse_algorithm',
+                        'resource_type': 'aws_s3_bucket_server_side_encryption_configuration',
+                        'type': 'related_resource',
+                        'value': 'AES256'
+                    }
+                ],
+                'mode': {'type': 'terraform-source'},
+                'name': 'check-related-bucket',
+                'resource': 'terraform.aws_s3_bucket'
+            },
+            'resource': {
+                '__tfmeta': {
+                    'filename': 'main.tf',
+                    'label': 'aws_s3_bucket',
+                    'line_end': 33,
+                    'line_start': 30,
+                    'path': 'aws_s3_bucket.example_d',
+                    'src_dir': 'tests/terraform/aws_s3_encryption_audit',
+                    'type': 'resource'
+                },
+                'acl': 'private',
+                'bucket': 'c7n-aws-s3-encryption-audit-test-d',
+            }
+        }
+    ]
+
+
+def test_related_filter_s3_encryption_absent(tmp_path):
+    (tmp_path / "policy.json").write_text(
+        json.dumps(
+            {
+                "policies": [
+                    {
+                        "name": "check-related-bucket",
+                        "resource": "terraform.aws_s3_bucket",
+                        "filters": [
+                            {
+                                "type": "related_resource",
+                                "resource_type": "aws_s3_bucket_server_side_encryption_configuration",  # noqa: E501
+                                "key": "rule.apply_server_side_encryption_by_default",
+                                "value": "absent",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run",
+            "-p",
+            str(tmp_path),
+            "-d",
+            str(terraform_dir / "aws_s3_encryption_audit"),
+            "-o",
+            "json",
+            "--output-file",
+            str(tmp_path / "output.json"),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 1
+
+    results = json.loads((tmp_path / "output.json").read_text())
+    assert "results" in results
+    string_results = str(results["results"])
+    assert "example_a" in string_results
+    assert "example_b" in string_results
+    assert "example_c" in string_results
+    assert "example_d" not in string_results
