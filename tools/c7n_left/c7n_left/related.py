@@ -17,7 +17,7 @@ def RelatedResourceFilter(reference_index):
             for rtype, potential_targets in event['graph'].get_resources_by_type():
                 # We have some resources on our graph that are of the target type.
                 # Exit early because these are the only resources we need to look at.
-                if rtype == self.data['type']:
+                if rtype == self.data['resource_type']:
                     target_resources = potential_targets
                     break
 
@@ -38,7 +38,7 @@ def RelatedResourceFilter(reference_index):
                 if base_id not in self.references.resource_index:
                     continue
 
-                target_ids = self.references.resource_index[base_id][self.data['type']]
+                target_ids = self.references.resource_index[base_id][self.data['resource_type']]
                 for target_id in target_ids:
                     target = target_resources_by_id[target_id]
                     related_resources[base_id].append(target)

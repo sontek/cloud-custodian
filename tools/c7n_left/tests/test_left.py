@@ -55,6 +55,7 @@ def test_provider_parse():
         "line_end": 8,
         "path": "aws_subnet.example",
         "src_dir": Path("tests") / "terraform" / "ec2_stop_protection_disabled",
+        "type": "resource",
     }
 
 
@@ -218,7 +219,8 @@ def test_related_filter_s3_encryption(tmp_path):
                         "resource": "terraform.aws_s3_bucket",
                         "filters": [
                             {
-                                "type": "aws_s3_bucket_server_side_encryption_configuration",
+                                "type": "related_resource",
+                                "resource_type": "aws_s3_bucket_server_side_encryption_configuration",  # noqa: E501
                                 "key": "rule.apply_server_side_encryption_by_default.sse_algorithm",
                                 "value": "AES256",
                             }
@@ -266,7 +268,8 @@ def test_related_filter_s3_encryption(tmp_path):
                 'filters': [
                     {
                         'key': 'rule.apply_server_side_encryption_by_default.sse_algorithm',
-                        'type': 'aws_s3_bucket_server_side_encryption_configuration',
+                        'type': 'related_resource',
+                        'resource_type': 'aws_s3_bucket_server_side_encryption_configuration',
                         'value': 'AES256'
                     }
                 ],
@@ -287,7 +290,8 @@ def test_related_filter_s3_encryption_absent(tmp_path):
                         "resource": "terraform.aws_s3_bucket",
                         "filters": [
                             {
-                                "type": "aws_s3_bucket_server_side_encryption_configuration",
+                                "type": "related_resource",
+                                "resource_type": "aws_s3_bucket_server_side_encryption_configuration",  # noqa: E501
                                 "key": "rule.apply_server_side_encryption_by_default",
                                 "value": "absent",
                             }

@@ -50,12 +50,10 @@ class TerraformProvider(IACSourceProvider):
         [_ for _ in graph.get_resources_by_type(references_index=references)]
         log.debug("Loaded %d resources", len(graph))
         related_filter = RelatedResourceFilter(references)
-
-        for resource_type in references.registry.keys():
-            TerraformResourceManager.filter_registry.register(
-                resource_type,
-                related_filter,
-            )
+        TerraformResourceManager.filter_registry.register(
+            "related_resource",
+            related_filter,
+        )
 
         return graph
 
