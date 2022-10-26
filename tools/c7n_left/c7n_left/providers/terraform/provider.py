@@ -13,8 +13,11 @@ from ...core import (
     IACResourceMap,
     IACSourceProvider,
     IACSourceMode,
+    ResourceGraphReferenceIndex,
     log,
 )
+
+from ...related import RelatedResourceFilter
 from .graph import TerraformGraph
 
 
@@ -41,8 +44,19 @@ class TerraformProvider(IACSourceProvider):
         return policies
 
     def parse(self, source_dir):
-        graph = TerraformGraph(load_from_path(source_dir), source_dir)
+        resource_data = load_from_path(source_dir)
+        graph = TerraformGraph(resource_data, source_dir)
+        references = ResourceGraphReferenceIndex()
+        # We need to traverse the graph one time to get all the references
+        # so we can generate the filter registry.
+        [_ for _ in graph.get_resources_by_type(references_index=references)]
         log.debug("Loaded %d resources", len(graph))
+        related_filter = RelatedResourceFilter(references)
+        TerraformResourceManager.filter_registry.register(
+            "related_resource",
+            related_filter,
+        )
+
         return graph
 
     def match_dir(self, source_dir):

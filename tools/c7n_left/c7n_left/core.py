@@ -3,6 +3,7 @@
 #
 import fnmatch
 import logging
+import sys
 
 from c7n.actions import ActionRegistry
 from c7n.cache import NullCache
@@ -11,6 +12,8 @@ from c7n.manager import ResourceManager
 
 from c7n.provider import Provider, clouds
 from c7n.policy import PolicyExecutionMode
+from .utils import load_policies
+from collections import defaultdict
 
 
 log = logging.getLogger("c7n.iac")
@@ -31,8 +34,8 @@ class IACSourceProvider(Provider):
 
 
 class CollectionRunner:
-    def __init__(self, policies, options, reporter):
-        self.policies = policies
+    def __init__(self, policy_dir, options, reporter):
+        self.policy_dir = policy_dir
         self.options = options
         self.reporter = reporter
 
@@ -46,17 +49,21 @@ class CollectionRunner:
             )
 
         graph = provider.parse(self.options.source_dir)
+        policies = load_policies(self.policy_dir, self.options)
+        if not policies:
+            log.warning("no policies found")
+            sys.exit(1)
 
-        for p in self.policies:
+        for p in policies:
             p.expand_variables(p.get_variables())
             p.validate()
 
-        self.reporter.on_execution_started(self.policies)
+        self.reporter.on_execution_started(policies)
         # consider inverting this order to allow for results grouped by policy
         # at the moment, we're doing results grouped by resource.
         found = False
         for rtype, resources in graph.get_resources_by_type():
-            for p in self.policies:
+            for p in policies:
                 if not self.match_type(rtype, p):
                     continue
                 result_set = self.run_policy(p, graph, resources, event)
@@ -72,7 +79,7 @@ class CollectionRunner:
         return policy.push(event)
 
     def get_provider(self):
-        provider_name = {p.provider_name for p in self.policies}.pop()
+        provider_name = self.options.provider
         provider = clouds[provider_name]()
         return provider
 
@@ -168,10 +175,56 @@ class IACResourceMap(object):
         return self.resource_class
 
 
+class ResourceGraphReferenceIndex:
+    """
+    This is a generic indexing class that allows us to store
+    references between resources in a ResourceGraph while providing
+    a quick lookup point to build out filters for c7n core.
+    """
+    def __init__(self):
+        # The resources index is a place to store all references
+        # to other resources in a fast lookup table.
+        # {<resource_id>: {<resource_type>: [<resource_id>] } }
+        # For example...
+        #    "<s3_bucket_id>":
+        #        "aws_s3_bucket_server_side_encryption_configuration": [<sse_id>]
+        #
+        #    "<sse_id>:
+        #       "aws_s3_bucket": [s3_bucket_id]
+        self.resource_index = defaultdict(dict)
+
+        # {<resource_type>: <related_resource_type>: <lookup_key>}
+        # For example:
+        #   "<aws_s3_bucket_sse>:
+        #       "<aws_s3_bucket>": "bucket"
+        self.registry = defaultdict(dict)
+
+    def add_reference(
+        self,
+        base_resource_type,
+        base_resource_id,
+        related_resource_type,
+        related_resource_id,
+        related_id_expression,
+    ):
+        # We store the inverse of the reference so we can get it from either side.
+        if related_resource_type not in self.resource_index[base_resource_id]:
+            self.resource_index[base_resource_id][related_resource_type] = []
+        self.resource_index[base_resource_id][related_resource_type].append(related_resource_id)
+
+        if base_resource_type not in self.resource_index[related_resource_id]:
+            self.resource_index[related_resource_id][base_resource_type] = []
+        self.resource_index[related_resource_id][base_resource_type].append(base_resource_id)
+
+        # We cannot store the inverse for the property registry because that information
+        # actually isn't represented in the dataset from `tfparse`
+        self.registry[base_resource_type][related_resource_type] = related_id_expression
+
+
 class ResourceGraph:
     def __init__(self, resource_data, src_dir):
         self.resource_data = resource_data
         self.src_dir = src_dir
 
-    def get_resource_by_type(self):
+    def get_resources_by_type(self, types=(), references_index=None):
         raise NotImplementedError()

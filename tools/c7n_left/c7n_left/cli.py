@@ -11,7 +11,6 @@ from c7n.config import Config
 from .entry import initialize_iac
 from .output import get_reporter, report_outputs
 from .core import CollectionRunner
-from .utils import load_policies
 
 
 log = logging.getLogger("c7n.iac")
@@ -42,13 +41,10 @@ def run(format, policy_dir, directory, output, output_file, output_query):
         output=output,
         output_file=output_file,
         output_query=output_query,
+        provider=format,
     )
-    policies = load_policies(policy_dir, config)
-    if not policies:
-        log.warning("no policies found")
-        sys.exit(1)
     reporter = get_reporter(config)
-    runner = CollectionRunner(policies, config, reporter)
+    runner = CollectionRunner(policy_dir, config, reporter)
     sys.exit(int(runner.run()))
 
 
