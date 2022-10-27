@@ -396,7 +396,10 @@ def test_related_filter_s3_encryption(tmp_path):
             "json",
             "--output-file",
             str(tmp_path / "output.json"),
+            "--output-query",
+            "[].resource.__tfmeta.path",
         ],
         catch_exceptions=False,
     )
-    assert result.exit_code == 1
+    results = json.loads((tmp_path / "output.json").read_text())
+    assert results["results"] == ['aws_s3_bucket.example_d']
