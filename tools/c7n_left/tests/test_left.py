@@ -31,7 +31,6 @@ terraform_dir = terraform_dir.relative_to(cur_dir)
 
 
 class ResultsReporter:
-
     def __init__(self):
         self.results = []
 
@@ -47,11 +46,9 @@ class ResultsReporter:
 
 def run_policy(policy, terraform_dir, tmp_path):
     (tmp_path / "policies.json").write_text(
-        json.dumps({'policies': [policy]}, indent=2))
-    config = Config.empty(
-        policy_dir=tmp_path,
-        source_dir=terraform_dir
+        json.dumps({"policies": [policy]}, indent=2)
     )
+    config = Config.empty(policy_dir=tmp_path, source_dir=terraform_dir)
     policies = utils.load_policies(tmp_path, config)
     reporter = ResultsReporter()
     core.CollectionRunner(policies, config, reporter).run()
@@ -104,18 +101,21 @@ def test_graph_resolver_id():
 
 def test_link_filter(tmp_path):
     resources = run_policy(
-        {'name': 'check-link',
-         'resource': 'terraform.aws_codebuild_project',
-         'filters': [
-             {
-                 'type': 'link',
-                 'resources': ['aws_security_group', 'aws_vpc'],
-                 'count': 1,
-                 'attrs': [{'tag:Env': 'Dev'}]
-             }
-         ]},
+        {
+            "name": "check-link",
+            "resource": "terraform.aws_codebuild_project",
+            "filters": [
+                {
+                    "type": "link",
+                    "resources": ["aws_security_group", "aws_vpc"],
+                    "count": 1,
+                    "attrs": [{"tag:Env": "Dev"}],
+                }
+            ],
+        },
         terraform_dir / "aws_code_build_vpc",
-        tmp_path)
+        tmp_path,
+    )
     assert len(resources) == 1
 
 
