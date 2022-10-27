@@ -402,4 +402,4 @@ def test_related_filter_s3_encryption(tmp_path):
         catch_exceptions=False,
     )
     results = json.loads((tmp_path / "output.json").read_text())
-    assert results["results"] == ['aws_s3_bucket.example_d']
+    assert results["results"] == ["aws_s3_bucket.example_d"]
