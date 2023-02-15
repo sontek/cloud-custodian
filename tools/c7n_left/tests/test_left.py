@@ -131,6 +131,7 @@ def test_graph_resolver_inner_block_ref():
         ("aws_vpc", "aws_security_group", "aws_iam_role", "aws_subnet")
     )
 
+
 def test_graph_resolver_local_modules():
     graph = TerraformProvider().parse(terraform_dir / "local_modules/root")
     queues = list(graph.get_resources_by_type("aws_sqs_queue"))
