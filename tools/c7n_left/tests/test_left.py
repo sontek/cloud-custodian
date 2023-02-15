@@ -131,6 +131,13 @@ def test_graph_resolver_inner_block_ref():
         ("aws_vpc", "aws_security_group", "aws_iam_role", "aws_subnet")
     )
 
+def test_graph_resolver_local_modules():
+    graph = TerraformProvider().parse(terraform_dir / "local_modules/root")
+    queues = list(graph.get_resources_by_type("aws_sqs_queue"))
+    # prove that we got the parent module resources.
+    assert len(queues[0][1]) == 2
+    assert queues[0][1][1]["name"] == "parent_queue"
+
 
 def test_graph_resolver_id():
     resolver = Resolver()
