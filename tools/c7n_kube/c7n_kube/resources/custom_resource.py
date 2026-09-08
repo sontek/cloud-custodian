@@ -26,15 +26,6 @@ def tag_custom_resource_instance(raw_instance, *, group, version, plural, scope)
     return tagged
 
 
-class CustomResourceTypeInfo(TypeInfo):
-    # Resolves session.client("CustomObjects", "") -> CustomObjectsApi. Not
-    # this type's own group/version -- there are many, one per discovered
-    # CRD, decided at sync time.
-    group = "CustomObjects"
-    version = ""
-    canonical_group = "custom-resource"
-
-
 @resources.register("custom-resource")
 class CustomResource(QueryResourceManager, metaclass=QueryMeta):
     """Discovers every installed CustomResourceDefinition (served, storage
@@ -48,8 +39,13 @@ class CustomResource(QueryResourceManager, metaclass=QueryMeta):
     `filters:` block against this type.
     """
 
-    class resource_type(CustomResourceTypeInfo):
-        pass
+    class resource_type(TypeInfo):
+        # Resolves session.client("CustomObjects", "") -> CustomObjectsApi. Not
+        # this type's own group/version -- there are many, one per discovered
+        # CRD, decided at sync time.
+        group = "CustomObjects"
+        version = ""
+        canonical_group = "custom-resource"
 
     def resources(self, query=None):
         session = local_session(self.session_factory)
